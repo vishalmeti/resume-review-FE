@@ -1,60 +1,65 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
+import { useToast } from '../components/ToastProvider'
 
 export default function Dashboard() {
-  const [score, setScore] = useState(72)
+  const [dashboardData, setDashboardData] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [match, setMatch] = useState(null)
-  const [stats, setStats] = useState({
-    totalResumes: 0,
-    totalAnalyses: 0,
-    totalInterviews: 0,
-    avgScore: 0,
-    recentActivity: []
-  })
-  const [resumeData, setResumeData] = useState(null)
+  const { toast } = useToast()
 
   useEffect(() => {
-    const resumeId = sessionStorage.getItem('resumeId')
     const storedMatch = sessionStorage.getItem('match')
-    if (storedMatch) setMatch(JSON.parse(storedMatch))
+    if (storedMatch) {
+      try {
+        setMatch(JSON.parse(storedMatch))
+      } catch (e) {
+        console.error('Failed to parse stored match:', e)
+      }
+    }
 
-    // Load dashboard data
     loadDashboardData()
-    if (resumeId) loadResumeData(resumeId)
   }, [])
 
   async function loadDashboardData() {
     try {
-      // This would come from your API - simulating for now
-      setStats({
-        totalResumes: 3,
-        totalAnalyses: 12,
-        totalInterviews: 8,
-        avgScore: 78,
-        recentActivity: [
-          { type: 'analysis', description: 'Analyzed Software Engineer role at Google', date: new Date(Date.now() - 86400000) },
-          { type: 'interview', description: 'Completed mock interview (5 questions)', date: new Date(Date.now() - 172800000) },
-          { type: 'upload', description: 'Uploaded updated resume', date: new Date(Date.now() - 259200000) }
-        ]
-      })
+      setLoading(true)
+      const response = await api('/dashboard/stats')
+      setDashboardData(response.stats)
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
+      toast('Failed to load dashboard data', { type: 'error' })
+    } finally {
+      setLoading(false)
     }
   }
 
-  async function loadResumeData(resumeId) {
-    try {
-      // This would come from your API - simulating parsed resume data
-      setResumeData({
-        skills: ['JavaScript', 'React', 'Node.js', 'Python', 'AWS', 'Docker'],
-        experience: '3.5 years',
-        education: 'Computer Science',
-        lastUpdated: new Date(Date.now() - 259200000)
-      })
-    } catch (error) {
-      console.error('Failed to load resume data:', error)
-    }
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="ai-loader" aria-label="Loading dashboard..." />
+      </div>
+    )
   }
+
+  // No data state
+  if (!dashboardData) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500 dark:text-gray-400">Failed to load dashboard data</p>
+        <button onClick={loadDashboardData} className="btn btn-primary mt-4">
+          Retry
+        </button>
+      </div>
+    )
+  }
+
+  const score = dashboardData.careerHealthScore.overall
+  const breakdown = dashboardData.careerHealthScore.breakdown
+  const stats = dashboardData.userStats
+  const resumeData = dashboardData.resumeInsights
+  const recentActivity = dashboardData.recentActivity
 
   const radius = 56
   const circumference = 2 * Math.PI * radius
@@ -69,11 +74,11 @@ export default function Dashboard() {
 
   const getActivityIcon = (type) => {
     switch (type) {
-      case 'analysis':
+      case 'upload':
         return (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-blue-500">
-            <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
-            <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-purple-500">
+            <path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" strokeWidth="2" />
+            <path d="M20 16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2" stroke="currentColor" strokeWidth="2" />
           </svg>
         )
       case 'interview':
@@ -82,11 +87,17 @@ export default function Dashboard() {
             <path d="M21 7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h9l4 4v-4h1a2 2 0 0 0 2-2V7Z" stroke="currentColor" strokeWidth="2" />
           </svg>
         )
-      case 'upload':
+      case 'job':
         return (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-purple-500">
-            <path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" strokeWidth="2" />
-            <path d="M20 16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2" stroke="currentColor" strokeWidth="2" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-blue-500">
+            <path d="M3 7h18v12H3z" stroke="currentColor" strokeWidth="2" />
+            <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" strokeWidth="2" />
+          </svg>
+        )
+      case 'learning':
+        return (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-orange-500">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z" fill="currentColor" />
           </svg>
         )
       default:
@@ -149,27 +160,27 @@ export default function Dashboard() {
                 <span className="text-sm text-gray-600 dark:text-gray-400">Skills Match</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full" style={{ width: '78%' }}></div>
+                    <div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full" style={{ width: `${breakdown.skillsMatch}%` }}></div>
                   </div>
-                  <span className="text-xs font-medium">78%</span>
+                  <span className="text-xs font-medium">{breakdown.skillsMatch}%</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Experience Level</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full" style={{ width: '82%' }}></div>
+                    <div className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full" style={{ width: `${breakdown.experienceLevel}%` }}></div>
                   </div>
-                  <span className="text-xs font-medium">82%</span>
+                  <span className="text-xs font-medium">{breakdown.experienceLevel}%</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Market Relevance</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full" style={{ width: '65%' }}></div>
+                    <div className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full" style={{ width: `${breakdown.marketRelevance}%` }}></div>
                   </div>
-                  <span className="text-xs font-medium">65%</span>
+                  <span className="text-xs font-medium">{breakdown.marketRelevance}%</span>
                 </div>
               </div>
             </div>
@@ -198,7 +209,7 @@ export default function Dashboard() {
                 <path d="M21 7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h9l4 4v-4h1a2 2 0 0 0 2-2V7Z" stroke="currentColor" strokeWidth="2" />
               </svg>
             </div>
-            <div className="text-3xl font-bold mb-1">{stats.avgScore}/100</div>
+            <div className="text-3xl font-bold mb-1">{stats.avgInterviewScore}/100</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
               Based on {stats.totalInterviews} mock interviews
             </div>
@@ -222,12 +233,12 @@ export default function Dashboard() {
         <div className="card text-center">
           <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-white">
-              <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
-              <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2" />
+              <path d="M3 7h18v12H3z" stroke="currentColor" strokeWidth="2" />
+              <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" strokeWidth="2" />
             </svg>
           </div>
-          <div className="text-2xl font-bold">{stats.totalAnalyses}</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">Analyses</div>
+          <div className="text-2xl font-bold">{stats.totalJobApplications}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Job Apps</div>
         </div>
 
         <div className="card text-center">
@@ -246,8 +257,8 @@ export default function Dashboard() {
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z" fill="currentColor" />
             </svg>
           </div>
-          <div className="text-2xl font-bold">{stats.avgScore}</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">Avg Score</div>
+          <div className="text-2xl font-bold">{stats.totalQuestions}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Questions</div>
         </div>
       </div>
 
@@ -263,7 +274,7 @@ export default function Dashboard() {
             Recent Activity
           </h3>
           <div className="space-y-3">
-            {stats.recentActivity.map((activity, index) => (
+            {recentActivity.length > 0 ? recentActivity.map((activity, index) => (
               <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50/80 dark:bg-gray-700/50">
                 <div className="flex-shrink-0 mt-0.5">
                   {getActivityIcon(activity.type)}
@@ -273,7 +284,7 @@ export default function Dashboard() {
                     {activity.description}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {activity.date.toLocaleDateString('en-US', {
+                    {new Date(activity.date).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       hour: '2-digit',
@@ -282,7 +293,12 @@ export default function Dashboard() {
                   </p>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                <p className="text-sm">No recent activity</p>
+                <p className="text-xs mt-1">Start by uploading a resume or practicing interviews</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -300,17 +316,21 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Experience Level</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{resumeData.experience}</span>
+                  <span className="text-sm font-medium">Experience</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{resumeData.experienceYears}</span>
                 </div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Education</span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">{resumeData.education}</span>
                 </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Skills Count</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{resumeData.skillsCount}</span>
+                </div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium">Last Updated</span>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {resumeData.lastUpdated.toLocaleDateString()}
+                    {new Date(resumeData.lastUpdated).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -318,7 +338,7 @@ export default function Dashboard() {
               <div>
                 <h4 className="text-sm font-medium mb-2">Top Skills</h4>
                 <div className="flex flex-wrap gap-1">
-                  {resumeData.skills.slice(0, 6).map((skill, index) => (
+                  {resumeData.topSkills.map((skill, index) => (
                     <span
                       key={index}
                       className="px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-lg dark:bg-primary-950/30 dark:text-primary-200"
@@ -328,6 +348,20 @@ export default function Dashboard() {
                   ))}
                 </div>
               </div>
+
+              {resumeData.suggestions && resumeData.suggestions.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Suggestions</h4>
+                  <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                    {resumeData.suggestions.slice(0, 3).map((suggestion, index) => (
+                      <li key={index} className="flex items-start gap-1">
+                        <span className="text-orange-500 mt-0.5">•</span>
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-8">

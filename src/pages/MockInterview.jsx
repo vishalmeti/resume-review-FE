@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, listInterviewSessions, getInterviewSession } from '../lib/api'
 import ResumePicker from '../components/ResumePicker'
 import { useToast } from '../components/ToastProvider'
+import CustomDropdown from '../components/CustomDropdown'
 
 export default function MockInterview() {
   const [sessionId, setSessionId] = useState(null)
@@ -144,17 +145,18 @@ export default function MockInterview() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Number of Questions</label>
-              <select
+              <CustomDropdown
                 value={numQuestions}
-                onChange={(e) => setNumQuestions(parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-white/40 rounded-xl bg-white/60 dark:bg-white/10 dark:text-gray-100 dark:border-white/10 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                <option value={3}>3 Questions (Quick)</option>
-                <option value={5}>5 Questions (Standard)</option>
-                <option value={8}>8 Questions (Comprehensive)</option>
-                <option value={10}>10 Questions (Full)</option>
-              </select>
+                onChange={(value) => setNumQuestions(parseInt(value))}
+                options={[
+                  { value: 3, label: '3 Questions', description: 'Quick practice session (~15 mins)', icon: '⚡' },
+                  { value: 5, label: '5 Questions', description: 'Standard interview length (~25 mins)', icon: '📋' },
+                  { value: 8, label: '8 Questions', description: 'Comprehensive practice (~40 mins)', icon: '📚' },
+                  { value: 10, label: '10 Questions', description: 'Full interview simulation (~50 mins)', icon: '🎯' }
+                ]}
+                label="Number of Questions"
+                placeholder="Select question count..."
+              />
             </div>
           </div>
 

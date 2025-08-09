@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { useToast } from '../components/ToastProvider'
+import CustomDropdown from '../components/CustomDropdown'
 
 const statuses = ['Applied', 'Interviewing', 'Offer', 'Rejected', 'Accepted', 'On Hold']
 
@@ -175,14 +176,18 @@ export default function JobTracker() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
-              <select
-                className="w-full px-3 py-2 border border-white/40 rounded-xl bg-white/60 dark:bg-white/10 dark:text-gray-100 dark:border-white/10 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              <CustomDropdown
                 value={form.status}
-                onChange={e => setForm({ ...form, status: e.target.value })}
-              >
-                {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+                onChange={value => setForm({ ...form, status: value })}
+                options={statuses.map(status => ({
+                  value: status,
+                  label: status,
+                  icon: <span className="text-lg">{statusConfig[status].icon}</span>,
+                  description: `Mark application as ${status.toLowerCase()}`
+                }))}
+                label="Status"
+                placeholder="Select status..."
+              />
             </div>
 
             <div>
@@ -344,13 +349,17 @@ export default function JobTracker() {
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">
-                    <select
-                      className="text-sm px-2 py-1 border border-white/40 rounded-lg bg-white/60 dark:bg-white/10 dark:text-gray-100 dark:border-white/10 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    <CustomDropdown
                       value={item.status}
-                      onChange={e => update(item._id, { status: e.target.value })}
-                    >
-                      {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                      onChange={value => update(item._id, { status: value })}
+                      options={statuses.map(status => ({
+                        value: status,
+                        label: status,
+                        icon: <span className="text-sm">{statusConfig[status].icon}</span>
+                      }))}
+                      size="sm"
+                      className="min-w-40"
+                    />
                     <button
                       className="btn btn-ghost p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/30"
                       onClick={() => remove(item._id)}

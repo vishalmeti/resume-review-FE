@@ -17,6 +17,9 @@ export default function MockInterview() {
   const [numQuestions, setNumQuestions] = useState(5)
   const { toast } = useToast()
 
+  // Focus mode detection - hide distractions during active interview
+  const isActiveInterview = sessionId && questions.length > 0 && !completed
+
   async function start() {
     const resumeId = sessionStorage.getItem('resumeId')
     if (!resumeId) {
@@ -35,6 +38,8 @@ export default function MockInterview() {
       setFeedback(null)
       setAnswer('')
       setCompleted(false)
+      // Store session for focus mode detection
+      sessionStorage.setItem('interviewSessionId', res.sessionId)
       toast('New interview session started', { type: 'info' })
     } catch (error) {
       toast('Failed to start interview session', { type: 'error' })
@@ -114,14 +119,16 @@ export default function MockInterview() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Mock Interview</h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">Practice with AI-powered interview questions</p>
+      {/* Header - Hidden in focus mode */}
+      {!isActiveInterview && (
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Mock Interview</h1>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Practice with AI-powered interview questions</p>
+          </div>
+          <ResumePicker onChange={() => loadSessions()} />
         </div>
-        <ResumePicker onChange={() => loadSessions()} />
-      </div>
+      )}
 
       {/* Interview Setup & Progress */}
       {!sessionId && (
@@ -176,7 +183,7 @@ export default function MockInterview() {
                   <path d="M8 5v14l11-7z" fill="currentColor" />
                 </svg>
                 Start Interview
-              </div>
+                </div>
             )}
           </button>
         </div>
@@ -185,8 +192,9 @@ export default function MockInterview() {
       {/* Active Interview */}
       {sessionId && (
         <div className="flex-1 flex flex-col min-h-0">
-          {/* Progress Bar */}
-          <div className="bg-white/60 backdrop-blur border border-white/40 rounded-2xl p-4 mb-4 dark:border-white/10 dark:bg-white/10">
+          {/* Progress Bar - Hidden in focus mode */}
+          {!isActiveInterview && (
+            <div className="bg-white/60 backdrop-blur border border-white/40 rounded-2xl p-4 mb-4 dark:border-white/10 dark:bg-white/10">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Interview Progress</span>
               <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -199,7 +207,8 @@ export default function MockInterview() {
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
-          </div>
+            </div>
+          )}
 
           {/* Chat Interface */}
           <div className="flex-1 bg-white/60 backdrop-blur border border-white/40 rounded-2xl overflow-hidden dark:border-white/10 dark:bg-white/10 flex flex-col">
@@ -226,8 +235,8 @@ export default function MockInterview() {
                     </div>
                   </div>
 
-                  {/* User Answer (if feedback exists) */}
-      {feedback && (
+                  {/* User Answer (if submitted and feedback exists OR if currently loading) */}
+                  {(feedback || (loading && answer.trim())) && (
                     <>
                       <div className="flex items-start gap-3 justify-end">
                         <div className="flex-1 max-w-[85%]">
@@ -243,18 +252,85 @@ export default function MockInterview() {
                         </div>
                       </div>
 
-                      {/* AI Feedback */}
+                      {/* AI Analysis Loading or AI Feedback */}
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z" fill="currentColor" />
-                          </svg>
-                        </div>
+                        {loading ? (
+                          // AI Analysis Loading Animation - Enhanced
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 via-indigo-500 to-cyan-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 relative overflow-hidden ai-gradient-shift shadow-2xl">
+                            {/* Animated Background Layers */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-indigo-500 to-cyan-500 ai-pulse"></div>
+                            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 via-indigo-500 to-purple-500 animate-spin" style={{ animationDuration: '3s' }}></div>
+                            {/* Enhanced Neural Network Effect */}
+                            <div className="absolute inset-0">
+                              <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-cyan-300 rounded-full neural-spark shadow-lg shadow-cyan-400/50" style={{ animationDelay: '0s' }}></div>
+                              <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-purple-300 rounded-full neural-spark shadow-lg shadow-purple-400/50" style={{ animationDelay: '0.3s' }}></div>
+                              <div className="absolute bottom-1 left-1 w-1.5 h-1.5 bg-indigo-300 rounded-full neural-spark shadow-lg shadow-indigo-400/50" style={{ animationDelay: '0.6s' }}></div>
+                              <div className="absolute bottom-1 right-1 w-1.5 h-1.5 bg-pink-300 rounded-full neural-spark shadow-lg shadow-pink-400/50" style={{ animationDelay: '0.9s' }}></div>
+                              {/* Center neural core */}
+                              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full ai-pulse shadow-lg shadow-white/50"></div>
+                            </div>
+                            {/* Enhanced AI Icon */}
+                            <div className="relative z-10 ai-pulse">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="animate-pulse drop-shadow-lg">
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2.5" />
+                                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="currentColor" strokeWidth="2.5" />
+                                <circle cx="12" cy="12" r="1" fill="currentColor" className="animate-ping" />
+                              </svg>
+                            </div>
+                          </div>
+                        ) : (
+                        // AI Feedback Icon
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z" fill="currentColor" />
+                              </svg>
+                            </div>
+                        )}
                         <div className="flex-1 max-w-[85%]">
-                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 rounded-2xl rounded-tl-md p-4 shadow-sm">
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-xs font-medium text-green-700 dark:text-green-400">AI Feedback</span>
-                              <span className={`text-xs px-2 py-1 rounded-full border font-medium ${getScoreColor(feedback.score)}`}>
+                          {loading ? (
+                            // AI Analysis Loading Content
+                            <div className="bg-gradient-to-r from-purple-50/80 to-indigo-50/80 dark:from-purple-950/20 dark:to-indigo-950/20 border border-purple-200/50 dark:border-purple-800/30 rounded-2xl rounded-tl-md p-4 shadow-sm">
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-medium text-purple-700 dark:text-purple-400 flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                                  AI Analyzing Response
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-1 h-1 bg-purple-400 rounded-full thinking-dots" style={{ animationDelay: '0ms' }}></div>
+                                  <div className="w-1 h-1 bg-indigo-400 rounded-full thinking-dots" style={{ animationDelay: '200ms' }}></div>
+                                  <div className="w-1 h-1 bg-cyan-400 rounded-full thinking-dots" style={{ animationDelay: '400ms' }}></div>
+                                </div>
+                              </div>
+
+                              {/* Analysis Steps */}
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-green-500 rounded-full animate-pulse"></div>
+                                  <span className="text-sm text-gray-700 dark:text-gray-300">Processing natural language...</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                                  <span className="text-sm text-gray-700 dark:text-gray-300">Evaluating technical accuracy...</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                                  <span className="text-sm text-gray-700 dark:text-gray-300">Generating personalized feedback...</span>
+                                </div>
+                              </div>
+
+                              {/* Progress Bar */}
+                              <div className="mt-4">
+                                <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-500 rounded-full animate-pulse"></div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                          // AI Feedback Content
+                              <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 rounded-2xl rounded-tl-md p-4 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <span className="text-xs font-medium text-green-700 dark:text-green-400">AI Feedback</span>
+                                  <span className={`text-xs px-2 py-1 rounded-full border font-medium ${getScoreColor(feedback.score)}`}>
                                 {feedback.score}/100
                               </span>
                             </div>
@@ -282,7 +358,8 @@ export default function MockInterview() {
                                 </button>
                               </div>
                             )}
-                          </div>
+                              </div>
+                          )}
                         </div>
                       </div>
                     </>
@@ -318,9 +395,33 @@ export default function MockInterview() {
                       className="btn btn-primary px-6"
                     >
                       {loading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Analyzing...
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            {/* Enhanced AI Brain Core */}
+                            <div className="w-6 h-6 relative">
+                              {/* Outer Pulse Ring */}
+                              <div className="absolute inset-0 rounded-full border-2 border-white/40 animate-ping shadow-lg"></div>
+                              {/* Middle Rotating Ring */}
+                              <div className="absolute inset-0 rounded-full border-2 border-white/60 border-t-white animate-spin shadow-md"></div>
+                              {/* Inner Core */}
+                              <div className="absolute inset-1 rounded-full bg-white/90 animate-pulse shadow-inner"></div>
+                              {/* Enhanced Neural Sparks */}
+                              <div className="absolute -inset-2">
+                                <div className="absolute top-0 left-1/2 w-1 h-2 bg-cyan-300 transform -translate-x-1/2 neural-spark shadow-lg shadow-cyan-400/50" style={{ animationDelay: '0.1s' }}></div>
+                                <div className="absolute bottom-0 left-1/2 w-1 h-2 bg-purple-300 transform -translate-x-1/2 neural-spark shadow-lg shadow-purple-400/50" style={{ animationDelay: '0.3s' }}></div>
+                                <div className="absolute left-0 top-1/2 w-2 h-1 bg-indigo-300 transform -translate-y-1/2 neural-spark shadow-lg shadow-indigo-400/50" style={{ animationDelay: '0.5s' }}></div>
+                                <div className="absolute right-0 top-1/2 w-2 h-1 bg-pink-300 transform -translate-y-1/2 neural-spark shadow-lg shadow-pink-400/50" style={{ animationDelay: '0.7s' }}></div>
+                              </div>
+                            </div>
+                          </div>
+                          <span className="relative font-semibold">
+                            AI Analyzing
+                            <span className="thinking-dots ml-1 inline-flex gap-0.5">
+                              <span className="w-1 h-1 bg-white rounded-full thinking-dots" style={{ animationDelay: '0s' }}></span>
+                              <span className="w-1 h-1 bg-white rounded-full thinking-dots" style={{ animationDelay: '0.2s' }}></span>
+                              <span className="w-1 h-1 bg-white rounded-full thinking-dots" style={{ animationDelay: '0.4s' }}></span>
+                            </span>
+                          </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -339,8 +440,8 @@ export default function MockInterview() {
         </div>
       )}
 
-      {/* Past Sessions */}
-      {pastSessions.length > 0 && (
+      {/* Past Sessions - Hidden in focus mode */}
+      {!isActiveInterview && pastSessions.length > 0 && (
         <div className="mt-6 bg-white/60 backdrop-blur border border-white/40 rounded-2xl p-6 dark:border-white/10 dark:bg-white/10">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="opacity-80">

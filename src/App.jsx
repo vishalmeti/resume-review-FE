@@ -102,6 +102,10 @@ function Nav({ theme, onToggleTheme }) {
 function AppContent() {
   const location = useLocation()
   const [theme, setTheme] = useState('light')
+
+  // Detect if we're in focus mode (active interview)
+  const isInterviewFocusMode = location.pathname === '/interview' &&
+    (location.search.includes('sessionId') || sessionStorage.getItem('interviewSessionId'))
   const { isAuthenticated } = useAuth()
 
   // Initialize theme from storage or system preference
@@ -188,9 +192,10 @@ function AppContent() {
         <div className="ai-orb orb-1" />
         <div className="ai-orb orb-2" />
       </div>
-      <Nav theme={theme} onToggleTheme={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))} />
-      <div className="flex-1 overflow-hidden grid md:grid-cols-[260px_1fr] gap-6 px-4 sm:px-6 lg:px-8 py-6">
-        <aside className="hidden md:block overflow-auto">
+      {!isInterviewFocusMode && <Nav theme={theme} onToggleTheme={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))} />}
+      <div className={`flex-1 overflow-hidden ${isInterviewFocusMode ? 'px-2 py-2' : 'grid md:grid-cols-[260px_1fr] gap-6 px-4 sm:px-6 lg:px-8 py-6'}`}>
+        {!isInterviewFocusMode && (
+          <aside className="hidden md:block overflow-auto">
           <div className="card p-3">
             <div className="text-xs text-gray-500 dark:text-gray-400 px-2 mb-1">Main Features</div>
             <div className="flex flex-col">
@@ -209,8 +214,55 @@ function AppContent() {
             <div className="text-sm font-semibold mb-1">AI Tips</div>
             <div className="text-xs text-gray-600 dark:text-gray-400">Use Job Analysis to analyze match and generate a personalized learning plan.</div>
           </div>
-        </aside>
-        <main className="page-animate overflow-auto">
+          </aside>
+        )}
+
+        {/* Focus Mode Header (minimal) */}
+        {isInterviewFocusMode && (
+          <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex items-center justify-between px-4 py-2">
+              <div className="flex items-center gap-3">
+                <div className="text-lg font-bold ai-text">ResumeReview</div>
+                <div className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400 text-xs rounded-full font-medium">
+                  🎯 Interview Focus Mode
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  title="Toggle theme"
+                >
+                  {theme === 'dark' ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gray-600 dark:text-gray-400">
+                      <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2" />
+                      <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" strokeWidth="2" />
+                      <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" strokeWidth="2" />
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" strokeWidth="2" />
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" strokeWidth="2" />
+                      <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="2" />
+                      <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" strokeWidth="2" />
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" strokeWidth="2" />
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gray-600 dark:text-gray-400">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                  )}
+                </button>
+                <button
+                  onClick={() => window.location.href = '/dashboard'}
+                  className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Exit Focus
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <main className={`page-animate overflow-auto ${isInterviewFocusMode ? 'pt-16' : ''}`}>
           <Routes>
             <Route path="/dashboard" element={
               <ProtectedRoute>

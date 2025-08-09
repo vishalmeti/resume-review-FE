@@ -34,11 +34,87 @@ export default function Dashboard() {
     }
   }
 
-  // Loading state
+  // Loading state - premium AI loader + skeletons
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="ai-loader" aria-label="Loading dashboard..." />
+      <div className="relative min-h-[70vh] overflow-hidden">
+        {/* Background grid and orbs */}
+        <div className="absolute inset-0 -z-10 opacity-60">
+          <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-indigo-400/20 blur-3xl" />
+          <div className="absolute inset-0 bg-grid dark:opacity-40 opacity-20" />
+        </div>
+
+        {/* Center AI core */}
+        <div className="flex items-center justify-center pt-16">
+          <div className="relative w-44 h-44">
+            {/* Outer rotating ring */}
+            <div className="absolute inset-0 rounded-full border-2 border-transparent bg-[conic-gradient(from_0deg,theme(colors.primary.500),theme(colors.indigo.500),theme(colors.coral),theme(colors.primary.500))] blur-[2px] opacity-80" />
+            <div className="absolute inset-1 rounded-full bg-white/60 dark:bg-gray-900/60 backdrop-blur border border-white/30 dark:border-white/10" />
+
+            {/* Decorative rotating arcs */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-36 h-36 rounded-full border border-primary-500/30 rotate-slow" />
+              <div className="absolute w-28 h-28 rounded-full border border-indigo-500/30 rotate-reverse" />
+              <div className="absolute w-20 h-20 rounded-full border border-coral/40 rotate-slower" />
+            </div>
+
+            {/* Neural sparks */}
+            <div className="absolute inset-0">
+              <div className="absolute top-2 left-2 w-2 h-2 bg-cyan-300 rounded-full neural-spark" style={{ animationDelay: '0s' }} />
+              <div className="absolute top-2 right-2 w-2 h-2 bg-purple-300 rounded-full neural-spark" style={{ animationDelay: '0.3s' }} />
+              <div className="absolute bottom-2 left-2 w-2 h-2 bg-indigo-300 rounded-full neural-spark" style={{ animationDelay: '0.6s' }} />
+              <div className="absolute bottom-2 right-2 w-2 h-2 bg-pink-300 rounded-full neural-spark" style={{ animationDelay: '0.9s' }} />
+            </div>
+
+            {/* AI icon */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-primary-500 to-indigo-500 text-white shadow-xl loader-glow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="ai-pulse">
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2.5" />
+                  <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="currentColor" strokeWidth="2.5" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Skeleton grid */}
+        <div className="mt-12 grid lg:grid-cols-3 gap-6">
+          {/* Big card skeleton */}
+          <div className="lg:col-span-2 card p-6 relative overflow-hidden skeleton-shimmer">
+            <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
+            <div className="space-y-3">
+              <div className="h-3 w-3/4 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="h-3 w-2/3 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="h-3 w-5/6 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
+            <div className="absolute inset-0 pointer-events-none" />
+          </div>
+
+          {/* Side small cards */}
+          <div className="space-y-4">
+            <div className="card p-4 relative overflow-hidden skeleton-shimmer">
+              <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+              <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
+            <div className="card p-4 relative overflow-hidden skeleton-shimmer">
+              <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+              <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
+          </div>
+        </div>
+
+        {/* Lower skeletons */}
+        <div className="mt-6 grid md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="card p-4 relative overflow-hidden skeleton-shimmer">
+              <div className="h-10 w-10 rounded-lg bg-gray-200 dark:bg-gray-700 mb-3" />
+              <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
+              <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }

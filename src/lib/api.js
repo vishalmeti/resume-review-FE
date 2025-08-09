@@ -1,24 +1,67 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
 export async function api(path, options = {}) {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  };
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers,
     ...options,
   })
-  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Request failed')
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    
+    // If token is invalid, clear it and redirect to login
+    if (res.status === 401 && token) {
+      localStorage.removeItem('token');
+      sessionStorage.clear();
+      window.location.href = '/login';
+    }
+    
+    throw new Error(errorData.error || 'Request failed')
+  }
+  
   return res.json()
 }
 
 export async function uploadResume(fileOrText) {
-  // if (fileOrText instanceof File) {
-    const form = new FormData()
-    form.append('file', fileOrText)
-    const res = await fetch(`${BASE_URL}/resume/upload`, { method: 'POST', body: form })
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Upload failed')
-    return res.json()
-  // } else {
-  //   return api('/resume/upload', { method: 'POST', body: JSON.stringify({ text: fileOrText }) })
-  // }
+  const token = localStorage.getItem('token');
+  const headers = {};
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const form = new FormData()
+  form.append('file', fileOrText)
+  const res = await fetch(`${BASE_URL}/resume/upload`, { 
+    method: 'POST', 
+    headers,
+    body: form 
+  })
+  
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    
+    // If token is invalid, clear it and redirect to login
+    if (res.status === 401 && token) {
+      localStorage.removeItem('token');
+      sessionStorage.clear();
+      window.location.href = '/login';
+    }
+    
+    throw new Error(errorData.error || 'Upload failed')
+  }
+  
+  return res.json()
 }
 
 export async function listResumes() {

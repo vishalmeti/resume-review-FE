@@ -12,8 +12,8 @@ export default function Landing() {
           Upload your resume, analyze any job description, practice mock interviews, and follow a personalized learning plan.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <button className="btn btn-primary sheen" onClick={() => navigate('/upload')}>Get Started</button>
-          <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>Explore Dashboard</button>
+          <button className="btn btn-primary sheen" onClick={() => navigate('/register')}>Get Started</button>
+          <button className="btn btn-ghost" onClick={() => navigate('/login')}>Sign In</button>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-gray-600 dark:text-gray-400">
           <span className="px-3 py-1 rounded-full bg-white/60 border border-white/60 dark:bg-white/10 dark:border-white/20">Resume Parsing</span>

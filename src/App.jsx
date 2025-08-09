@@ -1,6 +1,10 @@
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
 import Landing from './pages/Landing'
+import Login from './pages/Login'
+import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import ResumeUpload from './pages/ResumeUpload'
 import JDInput from './pages/JDInput'
@@ -12,6 +16,7 @@ import InterviewSessions from './pages/InterviewSessions'
 
 function Nav({ theme, onToggleTheme }) {
   const location = useLocation()
+  const { user, logout } = useAuth()
 
   // Secondary/utility navigation items for header
   const secondaryLinks = [
@@ -52,6 +57,25 @@ function Nav({ theme, onToggleTheme }) {
             })}
           </div>
 
+          {/* User info and actions */}
+          {user && (
+            <>
+              <div className="hidden md:block w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
+              <div className="hidden md:flex items-center gap-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {user.username}
+                </span>
+                <button
+                  onClick={logout}
+                  className="btn btn-ghost text-sm px-3 py-1"
+                  title="Sign out"
+                >
+                  Sign out
+                </button>
+              </div>
+            </>
+          )}
+
           {/* Divider */}
           <div className="hidden md:block w-px h-6 bg-gray-300 dark:bg-gray-600 mx-2"></div>
 
@@ -75,9 +99,10 @@ function Nav({ theme, onToggleTheme }) {
   )
 }
 
-export default function App() {
+function AppContent() {
   const location = useLocation()
   const [theme, setTheme] = useState('light')
+  const { isAuthenticated } = useAuth()
 
   // Initialize theme from storage or system preference
   useEffect(() => {
@@ -122,9 +147,25 @@ export default function App() {
     },
   ]
 
+  const isAuthPage = ['/login', '/register'].includes(location.pathname)
   const isLanding = location.pathname === '/'
 
+  // Auth pages (login/register)
+  if (isAuthPage) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    )
+  }
+
+  // Landing page - redirect to dashboard if authenticated
   if (isLanding) {
+    if (isAuthenticated) {
+      return <Navigate to="/dashboard" replace />
+    }
+
     return (
       <div className="h-screen app-bg bg-grid flex flex-col overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -171,19 +212,59 @@ export default function App() {
         </aside>
         <main className="page-animate overflow-auto">
           <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/upload" element={<ResumeUpload />} />
-            <Route path="/jd" element={<JDInput />} />
-            <Route path="/interview" element={<MockInterview />} />
-            <Route path="/interview-sessions" element={<InterviewSessions />} />
-            <Route path="/plan" element={<LearningPlan />} />
-            <Route path="/jobs" element={<JobTracker />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/upload" element={
+              <ProtectedRoute>
+                <ResumeUpload />
+              </ProtectedRoute>
+            } />
+            <Route path="/jd" element={
+              <ProtectedRoute>
+                <JDInput />
+              </ProtectedRoute>
+            } />
+            <Route path="/interview" element={
+              <ProtectedRoute>
+                <MockInterview />
+              </ProtectedRoute>
+            } />
+            <Route path="/interview-sessions" element={
+              <ProtectedRoute>
+                <InterviewSessions />
+              </ProtectedRoute>
+            } />
+            <Route path="/plan" element={
+              <ProtectedRoute>
+                <LearningPlan />
+              </ProtectedRoute>
+            } />
+            <Route path="/jobs" element={
+              <ProtectedRoute>
+                <JobTracker />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>
       </div>
       <footer className="text-center text-sm text-gray-600 dark:text-gray-400 py-4 border-t border-white/20">Built with AI ✨</footer>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }

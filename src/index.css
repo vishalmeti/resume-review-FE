@@ -144,6 +144,23 @@ body { @apply text-gray-900 dark:text-gray-100 font-sans antialiased bg-white da
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Loading progress animation */
+@keyframes loading-progress {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Shine animation for progress bars */
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shine {
+  animation: shine 2s ease-in-out infinite;
+}
+
 /* Page entrance animation */
 .page-animate { animation: fadeSlide 420ms ease both; }
 @keyframes fadeSlide {

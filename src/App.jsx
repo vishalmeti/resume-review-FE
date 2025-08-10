@@ -135,7 +135,8 @@ function AppContent() {
     } catch (e) {
       console.warn('Could not access localStorage for theme')
     }
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    // Default to dark mode instead of system preference
+    return 'dark'
   })
 
   // Mobile navigation state
